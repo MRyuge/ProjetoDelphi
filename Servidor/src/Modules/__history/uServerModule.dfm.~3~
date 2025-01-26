@@ -1,0 +1,39 @@
+object ServerModule: TServerModule
+  OldCreateOrder = False
+  Height = 386
+  Width = 515
+  object FDConnection: TFDConnection
+    Params.Strings = (
+      'Database=teste'
+      'User_Name=postgres'
+      'Password=postgres'
+      'Server=localhost'
+      'DriverID=PG')
+    LoginPrompt = False
+    UpdateTransaction = FDTransaction
+    Left = 128
+    Top = 208
+  end
+  object FDTransaction: TFDTransaction
+    Connection = FDConnection
+    Left = 200
+    Top = 104
+  end
+  object FDQuery1: TFDQuery
+    Connection = FDConnection
+    Left = 280
+    Top = 112
+  end
+  object FDGUIxWaitCursor1: TFDGUIxWaitCursor
+    Provider = 'Forms'
+    Left = 240
+    Top = 176
+  end
+  object FDPhysPgDriverLink1: TFDPhysPgDriverLink
+    VendorLib = 
+      'C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Win32\Debug\libpq.d' +
+      'll'
+    Left = 340
+    Top = 188
+  end
+end

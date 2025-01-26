@@ -1,0 +1,190 @@
+unit PessoaDAO;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, FireDAC.Comp.Client, FireDAC.Stan.Param,
+  Data.DB, Pessoa, System.Generics.Collections, DataModuleDatabase;
+
+type
+  TPessoaDAO = class
+  public
+    function Insert(APessoa: TPessoa): Boolean;
+    function Update(APessoa: TPessoa): Boolean;
+    function Delete(AIdPessoa: Int64): Boolean;
+    function GetById(AIdPessoa: Int64): TPessoa;
+    function GetAll: TList<TPessoa>;
+  end;
+
+implementation
+
+{ TPessoaDAO }
+
+function TPessoaDAO.GetAll: TList<TPessoa>;
+var
+  Lista: TList<TPessoa>;
+  Query: TFDQuery;
+  Pessoa: TPessoa;
+begin
+  Lista := TList<TPessoa>.Create;
+  Query := TFDQuery.Create(nil);
+  try
+    try
+      Query.Connection := dmDatabase.FDConnection;
+      Query.SQL.Text := 'SELECT * FROM pessoa';
+      Query.Open;
+
+      while not Query.Eof do
+      begin
+        Pessoa := TPessoa.Create;
+        Pessoa.IdPessoa := Query.FieldByName('idpessoa').AsLargeInt;
+        Pessoa.FlNatureza := Query.FieldByName('flnatureza').AsInteger;
+        Pessoa.DsDocumento := Query.FieldByName('dsdocumento').AsString;
+        Pessoa.NmPrimeiro := Query.FieldByName('nmprimeiro').AsString;
+        Pessoa.NmSegundo := Query.FieldByName('nmsegundo').AsString;
+        Pessoa.DtRegistro := Query.FieldByName('dtregistro').AsDateTime;
+
+        Lista.Add(Pessoa);
+        Query.Next;
+      end;
+
+      Result := Lista;
+    except
+      on E: Exception do
+      begin
+        Lista.Free;
+        raise Exception.Create('Erro ao buscar todas as pessoas: ' + E.Message);
+      end;
+    end;
+  finally
+    Query.Free;
+  end;
+end;
+
+function TPessoaDAO.GetById(AIdPessoa: Int64): TPessoa;
+var
+  Query: TFDQuery;
+  Pessoa: TPessoa;
+begin
+  Query := TFDQuery.Create(nil);
+  try
+    try
+      Query.Connection := dmDatabase.FDConnection;
+      Query.SQL.Text := 'SELECT * FROM pessoa WHERE idpessoa = :idpessoa';
+      Query.ParamByName('idpessoa').AsLargeInt := AIdPessoa;
+      Query.Open;
+
+      if not Query.IsEmpty then
+      begin
+        Pessoa := TPessoa.Create;
+        Pessoa.IdPessoa := Query.FieldByName('idpessoa').AsLargeInt;
+        Pessoa.FlNatureza := Query.FieldByName('flnatureza').AsInteger;
+        Pessoa.DsDocumento := Query.FieldByName('dsdocumento').AsString;
+        Pessoa.NmPrimeiro := Query.FieldByName('nmprimeiro').AsString;
+        Pessoa.NmSegundo := Query.FieldByName('nmsegundo').AsString;
+        Pessoa.DtRegistro := Query.FieldByName('dtregistro').AsDateTime;
+
+        Result := Pessoa;
+      end
+      else
+        raise Exception.Create('Pessoa com ID ' + AIdPessoa.ToString +
+          ' não encontrada.');
+    except
+      on E: Exception do
+        raise Exception.Create('Erro ao buscar pessoa por ID: ' + E.Message);
+    end;
+  finally
+    Query.Free;
+  end;
+end;
+
+function TPessoaDAO.Insert(APessoa: TPessoa): Boolean;
+var
+  Query: TFDQuery;
+begin
+  Query := TFDQuery.Create(nil); // Cria o objeto Query
+  try
+    try
+      Query.Connection := dmDatabase.FDConnection;
+      Query.SQL.Text :=
+        'INSERT INTO pessoa (flnatureza, dsdocumento, nmprimeiro, nmsegundo, dtregistro) '
+        + 'VALUES (:flnatureza, :dsdocumento, :nmprimeiro, :nmsegundo, :dtregistro)';
+      Query.ParamByName('flnatureza').AsInteger := APessoa.FlNatureza;
+      Query.ParamByName('dsdocumento').AsString := APessoa.DsDocumento;
+      Query.ParamByName('nmprimeiro').AsString := APessoa.NmPrimeiro;
+      Query.ParamByName('nmsegundo').AsString := APessoa.NmSegundo;
+      Query.ParamByName('dtregistro').AsDateTime := APessoa.DtRegistro;
+
+      Query.ExecSQL;
+      Result := True;
+    except
+      on E: Exception do
+      begin
+        Result := False;
+        raise Exception.Create('Erro ao inserir pessoa: ' + E.Message);
+      end;
+    end;
+  finally
+    Query.Free;
+  end;
+end;
+
+function TPessoaDAO.Update(APessoa: TPessoa): Boolean;
+var
+  Query: TFDQuery;
+begin
+  Query := TFDQuery.Create(nil); // Cria o objeto Query
+  try
+    try
+      Query.Connection := dmDatabase.FDConnection;
+      Query.SQL.Text := 'UPDATE pessoa ' + 'SET flnatureza = :flnatureza, ' +
+        '    dsdocumento = :dsdocumento, ' + '    nmprimeiro = :nmprimeiro, ' +
+        '    nmsegundo = :nmsegundo, ' + '    dtregistro = :dtregistro ' +
+        'WHERE idpessoa = :idpessoa';
+      Query.ParamByName('flnatureza').AsInteger := APessoa.FlNatureza;
+      Query.ParamByName('dsdocumento').AsString := APessoa.DsDocumento;
+      Query.ParamByName('nmprimeiro').AsString := APessoa.NmPrimeiro;
+      Query.ParamByName('nmsegundo').AsString := APessoa.NmSegundo;
+      Query.ParamByName('dtregistro').AsDateTime := APessoa.DtRegistro;
+      Query.ParamByName('idpessoa').AsLargeInt := APessoa.IdPessoa;
+
+      Query.ExecSQL;
+      Result := True;
+    except
+      on E: Exception do
+      begin
+        Result := False;
+        raise Exception.Create('Erro ao atualizar pessoa: ' + E.Message);
+      end;
+    end;
+  finally
+    Query.Free;
+  end;
+end;
+
+function TPessoaDAO.Delete(AIdPessoa: Int64): Boolean;
+var
+  Query: TFDQuery;
+begin
+  Query := TFDQuery.Create(nil);
+  try
+    try
+      Query.Connection := dmDatabase.FDConnection;
+      Query.SQL.Text := 'DELETE FROM pessoa WHERE idpessoa = :idpessoa';
+      Query.ParamByName('idpessoa').AsLargeInt := AIdPessoa;
+
+      Query.ExecSQL;
+      Result := Query.RowsAffected > 0;
+    except
+      on E: Exception do
+      begin
+        Result := False;
+        raise Exception.Create('Erro ao excluir pessoa: ' + E.Message);
+      end;
+    end;
+  finally
+    Query.Free;
+  end;
+end;
+
+end.

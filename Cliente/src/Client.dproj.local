@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2020/05/16 20:33:40.000.364,=C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Unit5.pas</Transaction>
+    <Transaction>2020/07/03 09:11:40.000.304,=C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Unit5.pas</Transaction>
+    <Transaction>2022/09/03 11:48:06.000.440,=C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Unit5.pas</Transaction>
+    <Transaction>2022/09/17 08:02:15.000.959,=C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Unit5.pas</Transaction>
+    <Transaction>2022/09/18 08:30:03.000.554,=C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Unit6.pas</Transaction>
+    <Transaction>2022/09/18 08:40:21.000.500,=C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Unit6.pas</Transaction>
+    <Transaction>2022/09/25 09:26:50.000.770,=C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Unit6.pas</Transaction>
+    <Transaction>2022/09/27 20:23:41.000.206,=C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Unit6.pas</Transaction>
+    <Transaction>2025/01/17 14:50:39.000.486,=C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Unit6.pas</Transaction>
+    <Transaction>2025/01/23 16:33:46.000.546,=C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Unit6.pas</Transaction>
+    <Transaction>2025/01/23 16:34:38.000.175,C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Unit6.dfm=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\UCliente.dfm</Transaction>
+    <Transaction>2025/01/23 16:34:38.000.175,C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Unit6.pas=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\UCliente.pas</Transaction>
+    <Transaction>2025/01/23 16:35:36.000.481,C:\Users\Ryuge\Documents\Embarcadero\Studio\Projects\Project5.dproj=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Cliente.dproj</Transaction>
+    <Transaction>2025/01/23 16:35:55.000.312,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Cliente.dproj=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Client.dproj</Transaction>
+    <Transaction>2025/01/23 16:36:36.000.224,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\UCliente.pas=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\UClient.pas</Transaction>
+    <Transaction>2025/01/23 16:36:36.000.224,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\UCliente.dfm=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\UClient.dfm</Transaction>
+    <Transaction>2025/01/23 16:37:48.000.493,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\UClient.pas=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\FrmPrincipal.pas</Transaction>
+    <Transaction>2025/01/23 16:37:48.000.493,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\UClient.dfm=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\FrmPrincipal.dfm</Transaction>
+    <Transaction>2025/01/23 16:39:46.000.327,=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\New1.AppConfig.ini</Transaction>
+    <Transaction>2025/01/23 16:40:29.000.404,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\New1.AppConfig.ini=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Config\AppConfig.ini</Transaction>
+    <Transaction>2025/01/23 16:40:47.000.163,=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Unit1.pas</Transaction>
+    <Transaction>2025/01/23 16:40:59.000.211,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Unit1.pas=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Utils\HttpClientUtils.pas</Transaction>
+    <Transaction>2025/01/23 16:41:25.000.587,=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Unit1.pas</Transaction>
+    <Transaction>2025/01/23 16:41:34.000.327,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Unit1.pas=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Services\PessoaService.pas</Transaction>
+    <Transaction>2025/01/23 16:45:57.000.659,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\FrmPrincipal.pas=</Transaction>
+    <Transaction>2025/01/23 16:46:17.000.704,=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\FrmTestePessoa.pas</Transaction>
+    <Transaction>2025/01/24 11:29:51.000.816,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\FrmTestePessoa.dfm=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Services\EnderecoService.dfm</Transaction>
+    <Transaction>2025/01/24 11:29:51.000.816,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\FrmTestePessoa.pas=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Services\EnderecoService.pas</Transaction>
+    <Transaction>2025/01/24 11:30:45.000.100,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Services\EnderecoService.dfm=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\FrmTestePessoa.dfm</Transaction>
+    <Transaction>2025/01/24 11:30:45.000.100,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Services\EnderecoService.pas=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\FrmTestePessoa.pas</Transaction>
+    <Transaction>2025/01/24 11:30:56.000.263,=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Unit1.pas</Transaction>
+    <Transaction>2025/01/24 11:31:17.000.898,C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Unit1.pas=C:\TesteDelphi\MaikRyuge\ArquiteturaDataSnap\Cliente\Services\EnderecoService.pas</Transaction>
+  </Transactions>
+	<ActiveMobileDevice>
+		<NoProfile iOSSimulator="iPhone5"/>
+	</ActiveMobileDevice>
+</BorlandProject>

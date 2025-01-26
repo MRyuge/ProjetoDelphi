@@ -1,0 +1,114 @@
+unit HttpUtils;
+
+interface
+
+uses
+  System.SysUtils, EnderecoIntegracao, IdSSLOpenSSL, IdHTTP, System.JSON;
+
+type
+  THttpUtils = class
+  public
+    class function GetJSON(const URL: string): TJSONObject;
+    class function ConsultarViaCEP(ACep: string): TEnderecoIntegracao;
+  end;
+
+implementation
+
+{ THttpUtils }
+
+class function THttpUtils.ConsultarViaCEP(ACep: string): TEnderecoIntegracao;
+var
+  IdHTTP: TIdHTTP;
+  SSLHandler: TIdSSLIOHandlerSocketOpenSSL;
+  JsonResponse: TJSONObject;
+  Response: string;
+  EnderecoIntegracao: TEnderecoIntegracao;
+
+  function IsNumeric(const AValue: string): Boolean;
+  var
+    I: Integer;
+  begin
+    Result := True;
+    for I := 1 to Length(AValue) do
+    begin
+      if not CharInSet(AValue[I], ['0' .. '9']) then
+        Exit(False);
+    end;
+  end;
+
+begin
+  Result := nil;
+
+  // Validação do CEP
+  if ACep.Trim.IsEmpty or (Length(ACep) <> 8) or not IsNumeric(ACep) then
+    raise Exception.Create
+      ('CEP inválido. O CEP deve conter exatamente 8 dígitos numéricos.');
+
+  IdHTTP := TIdHTTP.Create(nil);
+  SSLHandler := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
+  try
+    IdHTTP.IOHandler := SSLHandler;
+    IdHTTP.Request.ContentType := 'application/json';
+    IdHTTP.ReadTimeout := 5000; // Timeout de leitura
+    IdHTTP.ConnectTimeout := 5000; // Timeout de conexão
+
+    try
+      // Realiza a requisição GET
+      Response := IdHTTP.Get('https://viacep.com.br/ws/' + ACep + '/json/');
+      JsonResponse := TJSONObject.ParseJSONValue(Response) as TJSONObject;
+
+      if Assigned(JsonResponse) then
+        try
+          // Verifica se a API retornou um erro
+          if JsonResponse.GetValue<Boolean>('erro', False) then
+            raise Exception.Create('CEP não encontrado.');
+
+          // Preenche o objeto TEnderecoIntegracao com os dados do JSON
+          EnderecoIntegracao := TEnderecoIntegracao.Create;
+          EnderecoIntegracao.DsUf := JsonResponse.GetValue<string>('uf', '');
+          EnderecoIntegracao.NmCidade := JsonResponse.GetValue<string>
+            ('localidade', '');
+          EnderecoIntegracao.NmBairro := JsonResponse.GetValue<string>
+            ('bairro', '');
+          EnderecoIntegracao.NmLogradouro := JsonResponse.GetValue<string>
+            ('logradouro', '');
+          EnderecoIntegracao.DsComplemento := JsonResponse.GetValue<string>
+            ('complemento', '');
+
+          Result := EnderecoIntegracao; // Retorna o objeto preenchido
+        finally
+          JsonResponse.Free; // Libera o JSON após o uso
+        end
+      else
+        raise Exception.Create('Resposta da API ViaCEP não é válida.');
+    except
+      on E: Exception do
+        raise Exception.Create('Erro ao consultar o ViaCEP: ' + E.Message);
+    end;
+  finally
+    IdHTTP.Free; // Libera o objeto HTTP
+    SSLHandler.Free; // Libera o manipulador SSL
+  end;
+end;
+
+class function THttpUtils.GetJSON(const URL: string): TJSONObject;
+var
+  HTTP: TIdHTTP;
+  SSL: TIdSSLIOHandlerSocketOpenSSL;
+  Response: string;
+begin
+  HTTP := TIdHTTP.Create(nil);
+  SSL := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
+  try
+    HTTP.IOHandler := SSL;
+    HTTP.Request.Accept := 'application/json';
+    Response := HTTP.Get(URL);
+    Result := TJSONObject.ParseJSONValue(Response) as TJSONObject;
+  finally
+    HTTP.Free;
+    SSL.Free;
+  end;
+
+end;
+
+end.

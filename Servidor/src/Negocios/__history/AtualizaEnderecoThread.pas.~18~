@@ -1,0 +1,118 @@
+unit AtualizaEnderecoThread;
+
+interface
+
+uses
+  System.Classes, System.Generics.Collections, EnderecoDAO, Endereco,
+  EnderecoIntegracaoDAO, HttpUtils, System.JSON;
+
+type
+  TAtualizaEnderecoThread = class(TThread)
+  private
+    FErroLog: string;
+    FEnderecoDAO: TEnderecoDAO;
+    FEnderecoIntegracaoDAO: TEnderecoIntegracaoDAO;
+    procedure ProcessarEndereco(AIdEndereco: Int64; ACep: string);
+    procedure LogErro(const Msg: string);
+    procedure LogErroSync;
+  protected
+    procedure Execute; override;
+  public
+    constructor Create;
+    destructor Destroy; override;
+  end;
+
+implementation
+
+uses
+  System.SysUtils, EnderecoIntegracao;
+
+constructor TAtualizaEnderecoThread.Create;
+begin
+  inherited Create(True); // Cria a thread suspensa
+  FreeOnTerminate := True; // Libera a thread automaticamente ao finalizar
+  FEnderecoDAO := TEnderecoDAO.Create;
+  FEnderecoIntegracaoDAO := TEnderecoIntegracaoDAO.Create;
+end;
+
+destructor TAtualizaEnderecoThread.Destroy;
+begin
+  FEnderecoDAO.Free;
+  FEnderecoIntegracaoDAO.Free;
+  inherited;
+end;
+
+procedure TAtualizaEnderecoThread.ProcessarEndereco(AIdEndereco: Int64;
+  ACep: string);
+var
+  EnderecoIntegracao: TEnderecoIntegracao;
+begin
+  try
+    EnderecoIntegracao := THttpUtils.ConsultarViaCEP(ACep);
+    try
+      EnderecoIntegracao.IdEndereco := AIdEndereco;
+      FEnderecoIntegracaoDAO.InserirOuAtualizar(EnderecoIntegracao);
+    finally
+      EnderecoIntegracao.Free;
+    end;
+  except
+    on E: Exception do
+      // Log de erro ou tratamento de exceção
+      Writeln('Erro ao processar o endereço ID ' + AIdEndereco.ToString + ': ' +
+        E.Message);
+  end;
+end;
+
+procedure TAtualizaEnderecoThread.Execute;
+var
+  EnderecoDAO: TEnderecoDAO;
+  IntegracaoDAO: TEnderecoIntegracaoDAO;
+  ListaEnderecos: TList<TEndereco>;
+  Endereco: TEndereco;
+  EnderecoIntegracao: TEnderecoIntegracao;
+begin
+  EnderecoDAO := TEnderecoDAO.Create;
+  IntegracaoDAO := TEnderecoIntegracaoDAO.Create;
+  try
+    ListaEnderecos := EnderecoDAO.GetAll;
+    try
+      for Endereco in ListaEnderecos do
+      begin
+        try
+          EnderecoIntegracao := THttpUtils.ConsultarViaCEP(Endereco.DsCep);
+          try
+            // Atualiza o IdEndereco no objeto retornado
+            EnderecoIntegracao.IdEndereco := Endereco.IdEndereco;
+
+            // Insere ou atualiza no banco
+            IntegracaoDAO.InserirOuAtualizarEnderecoIntegracao
+              (EnderecoIntegracao);
+          finally
+            EnderecoIntegracao.Free;
+          end;
+        except
+          on E: Exception do
+            Writeln(Format('Erro ao processar CEP %s: %s',
+              [Endereco.DsCep, E.Message]));
+        end;
+      end;
+    finally
+      ListaEnderecos.Free;
+    end;
+  finally
+    EnderecoDAO.Free;
+    IntegracaoDAO.Free;
+  end;
+end;
+
+procedure TAtualizaEnderecoThread.LogErro(const Msg: string);
+begin
+  Writeln(Msg);
+end;
+
+procedure TAtualizaEnderecoThread.LogErroSync;
+begin
+  Writeln(FErroLog);
+end;
+
+end.

@@ -1,0 +1,48 @@
+unit PessoaBusiness;
+
+interface
+
+uses
+  System.SysUtils, PessoaDAO, Pessoa;
+
+type
+  TPessoaBusiness = class
+  private
+    FDAO: TPessoaDAO;
+  public
+    constructor Create(ADAO: TPessoaDAO);
+    function InserirPessoa(FlNatureza: Integer; DsDocumento, NmPrimeiro, NmSegundo: string;
+      DtRegistro: TDateTime): Boolean;
+  end;
+
+implementation
+
+{ TPessoaBusiness }
+
+constructor TPessoaBusiness.Create(ADAO: TPessoaDAO);
+begin
+  inherited Create;
+  FDAO := ADAO;
+end;
+
+function TPessoaBusiness.InserirPessoa(FlNatureza: Integer; DsDocumento, NmPrimeiro, NmSegundo: string;
+  DtRegistro: TDateTime): Boolean;
+var
+  Pessoa: TPessoa;
+begin
+  // Validação de dados
+  if DsDocumento.Trim.IsEmpty then
+    raise Exception.Create('O documento não pode ser vazio.');
+  if NmPrimeiro.Trim.IsEmpty then
+    raise Exception.Create('O nome não pode ser vazio.');
+
+  Pessoa := TPessoa.Create(0, FlNatureza, DsDocumento, NmPrimeiro, NmSegundo, DtRegistro);
+  try
+    Result := FDAO.Insert(Pessoa);
+  finally
+    Pessoa.Free;
+  end;
+end;
+
+end.
+

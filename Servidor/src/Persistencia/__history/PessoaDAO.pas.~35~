@@ -1,0 +1,103 @@
+unit PessoaDAO;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, FireDAC.Comp.Client, FireDAC.Stan.Param,
+  Data.DB, DataModuleDatabase, Pessoa,System.Generics.Collections;
+
+type
+  TPessoaDAO = class
+  public
+    function Insert(APessoa: TPessoa): Boolean;
+    function Update(APessoa: TPessoa): Boolean;
+    function Delete(AIdPessoa: Int64): Boolean;
+    function GetById(AIdPessoa: Int64): TPessoa;
+    function GetAll: TList; // TList sem Generics
+  end;
+
+implementation
+
+{ TPessoaDAO }
+
+function TPessoaDAO.Insert(APessoa: TPessoa): Boolean;
+var
+  Query: TFDQuery;
+begin
+  Query := TFDQuery.Create(nil);
+  try
+    try
+      Query.Connection := dmDatabase.FDConnection;
+      Query.SQL.Text :=
+        'INSERT INTO pessoa (flnatureza, dsdocumento, nmprimeiro, nmsegundo, dtregistro) '
+        + 'VALUES (:flnatureza, :dsdocumento, :nmprimeiro, :nmsegundo, :dtregistro)';
+      Query.ParamByName('flnatureza').AsInteger := APessoa.FlNatureza;
+      Query.ParamByName('dsdocumento').AsString := APessoa.DsDocumento;
+      Query.ParamByName('nmprimeiro').AsString := APessoa.NmPrimeiro;
+      Query.ParamByName('nmsegundo').AsString := APessoa.NmSegundo;
+      Query.ParamByName('dtregistro').AsDateTime := APessoa.DtRegistro;
+      Query.ExecSQL;
+      Result := True;
+    except
+      on E: Exception do
+      begin
+        Result := False;
+        raise Exception.Create('Erro ao inserir pessoa: ' + E.Message);
+      end;
+    end;
+  finally
+    Query.Free;
+  end;
+end;
+
+function TPessoaDAO.Update(APessoa: TPessoa): Boolean;
+begin
+  // Mesma lógica do Insert
+end;
+
+function TPessoaDAO.Delete(AIdPessoa: Int64): Boolean;
+begin
+  // Mesma lógica do Insert
+end;
+
+function TPessoaDAO.GetById(AIdPessoa: Int64): TPessoa;
+begin
+  // Implementação já discutida
+end;
+
+function TPessoaDAO.GetAll: TList<TPessoa>;
+var
+  Lista: TList<TPessoa>;
+  Pessoa: TPessoa;
+  Query: TFDQuery;
+begin
+  Lista := TList<TPessoa>.Create; // Cria a lista genérica
+  Query := TFDQuery.Create(nil);
+  try
+    Query.Connection := dmDatabase.FDConnection;
+    Query.SQL.Text := 'SELECT * FROM pessoa';
+    Query.Open;
+
+    while not Query.Eof do
+    begin
+      Pessoa := TPessoa.Create;
+      Pessoa.IdPessoa := Query.FieldByName('idpessoa').AsLargeInt;
+      Pessoa.FlNatureza := Query.FieldByName('flnatureza').AsInteger;
+      Pessoa.DsDocumento := Query.FieldByName('dsdocumento').AsString;
+      Pessoa.NmPrimeiro := Query.FieldByName('nmprimeiro').AsString;
+      Pessoa.NmSegundo := Query.FieldByName('nmsegundo').AsString;
+      Pessoa.DtRegistro := Query.FieldByName('dtregistro').AsDateTime;
+
+      Lista.Add(Pessoa); // Adiciona a pessoa na lista
+      Query.Next;
+    end;
+
+    Result := Lista; // Retorna a lista de TPessoa
+  except
+    Lista.Free; // Libera a lista em caso de erro
+    raise;
+  end;
+end;
+
+
+end.

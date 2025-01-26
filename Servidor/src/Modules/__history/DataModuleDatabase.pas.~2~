@@ -1,0 +1,53 @@
+unit DataModuleDatabase;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
+  FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.Phys.PG,
+  FireDAC.Phys.PGDef, FireDAC.VCLUI.Wait, FireDAC.Comp.UI, FireDAC.Comp.Client,
+  Data.DB;
+
+type
+  TdmDatabase = class(TDataModule)
+    FDConnection: TFDConnection;
+    FDTransaction: TFDTransaction;
+    FDGUIxWaitCursor: TFDGUIxWaitCursor;
+    FDPhysPgDriverLink: TFDPhysPgDriverLink;
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+    procedure ConnectToDatabase;
+    procedure DisconnectFromDatabase;
+  end;
+
+var
+  dmDatabase: TdmDatabase;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+{$R *.dfm}
+{ TdmDatabase }
+
+procedure TdmDatabase.ConnectToDatabase;
+begin
+  try
+    if not FDConnection.Connected then
+      FDConnection.Connected := True;
+  except
+    on E: Exception do
+      raise Exception.Create('Erro ao conectar ao banco de dados: ' +
+        E.Message);
+  end;
+end;
+
+procedure TdmDatabase.DisconnectFromDatabase;
+begin
+  if FDConnection.Connected then
+    FDConnection.Connected := False;
+end;
+
+end.

@@ -1,0 +1,14 @@
+# Pastas e arquivos gerados pelo Delphi no cliente
+Win32/
+Win64/
+Debug/
+Release/
+*.dcu
+*.dcp
+*.res
+*.map
+*.cfg
+
+# Configurações e arquivos locais
+*.ini
+*.log

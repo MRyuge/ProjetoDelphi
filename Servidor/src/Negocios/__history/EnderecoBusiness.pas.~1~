@@ -1,0 +1,50 @@
+unit EnderecoBusiness;
+
+interface
+
+uses
+  System.Classes, System.SysUtils, System.Generics.Collections,
+  Endereco, EnderecoDAO, AtualizaEnderecoThread;
+
+type
+  TEnderecoService = class
+  private
+    FEnderecoDAO: TEnderecoDAO;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure AtualizarEnderecos;
+  end;
+
+implementation
+
+constructor TEnderecoService.Create;
+begin
+  FEnderecoDAO := TEnderecoDAO.Create;
+end;
+
+destructor TEnderecoService.Destroy;
+begin
+  FEnderecoDAO.Free;
+  inherited;
+end;
+
+procedure TEnderecoService.AtualizarEnderecos;
+var
+  ListaEnderecos: TList<TEndereco>;
+  Endereco: TEndereco;
+begin
+  ListaEnderecos := FEnderecoDAO.ObterTodosEnderecos;
+  try
+    for Endereco in ListaEnderecos do
+    begin
+      with TAtualizaEnderecoThread.Create(Endereco.IdEndereco, Endereco.DsCep,
+        FEnderecoDAO) do
+        Start;
+    end;
+  finally
+    ListaEnderecos.Free;
+  end;
+end;
+
+end.

@@ -1,0 +1,63 @@
+unit DatabaseModule;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, FireDAC.Comp.Client, FireDAC.Phys.PG,
+  FireDAC.Phys.PGDef;
+
+type
+  TDatabaseModule = class
+  private
+    FConnection: TFDConnection;
+    FDriverLink: TFDPhysPgDriverLink;
+  public
+    constructor Create;
+    destructor Destroy; override;
+
+    property Connection: TFDConnection read FConnection;
+  end;
+
+implementation
+
+{ TDatabaseModule }
+
+constructor TDatabaseModule.Create;
+begin
+  inherited Create;
+
+  // Configurar o driver do PostgreSQL
+  FDriverLink := TFDPhysPgDriverLink.Create(nil);
+  FDriverLink.VendorLib := 'libpq.dll';
+
+  // Configurar a conexão
+  FConnection := TFDConnection.Create(nil);
+  with FConnection do
+  begin
+    Params.DriverID := 'PG';
+    Params.Database := 'Teste'; // Nome do banco
+    Params.UserName := 'postgres';
+    Params.Password := 'postgres';
+    Params.Add('Server=localhost'); // Endereço do servidor
+    Params.Add('Port=5432');         // Porta do PostgreSQL
+    LoginPrompt := False;
+
+    // Tentar conectar
+    try
+      Connected := True;
+    except
+      on E: Exception do
+        raise Exception.Create('Erro ao conectar ao banco: ' + E.Message);
+    end;
+  end;
+end;
+
+destructor TDatabaseModule.Destroy;
+begin
+  FConnection.Free;
+  FDriverLink.Free;
+  inherited Destroy;
+end;
+
+end.
+

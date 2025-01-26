@@ -1,0 +1,50 @@
+unit PessoaBusiness;
+
+interface
+
+uses
+  System.SysUtils, PessoaDAO, FireDAC.Comp.Client;
+
+type
+  TPessoaBusiness = class
+  private
+    FDAO: TPessoaDAO;
+  public
+    constructor Create(AConnection: TFDConnection);
+    function InserirPessoa(const Nome, Documento: string): Boolean;
+  end;
+
+implementation
+
+{ TPessoaBusiness }
+
+constructor TPessoaBusiness.Create(AConnection: TFDConnection);
+begin
+  inherited Create;
+  // Instancia o DAO usando a mesma conexão
+  FDAO := TPessoaDAO.Create(AConnection);
+end;
+
+function TPessoaBusiness.InserirPessoa(const Nome, Documento: string): Boolean;
+begin
+  // Validação básica dos dados antes de inserir
+  if Nome.Trim.IsEmpty then
+    raise Exception.Create('O nome não pode ser vazio.');
+
+  if Documento.Trim.IsEmpty then
+    raise Exception.Create('O documento não pode ser vazio.');
+
+  try
+    // Chama o método do DAO para realizar a inserção
+    Result := FDAO.InsertPessoa(Nome, Documento);
+  except
+    on E: Exception do
+    begin
+      // Personaliza a mensagem de erro para a camada de negócio
+      raise Exception.Create('Erro ao inserir pessoa: ' + E.Message);
+    end;
+  end;
+end;
+
+end.
+

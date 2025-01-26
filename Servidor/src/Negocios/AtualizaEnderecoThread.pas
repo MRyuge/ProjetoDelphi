@@ -1,0 +1,110 @@
+unit AtualizaEnderecoThread;
+
+interface
+
+uses
+  System.Classes, System.Generics.Collections, EnderecoDAO, Endereco,
+  EnderecoIntegracao,
+  EnderecoIntegracaoDAO, HttpUtils, System.JSON, System.SysUtils;
+
+type
+  TAtualizaEnderecoThread = class(TThread)
+  private
+    FEnderecoDAO: TEnderecoDAO;
+    FEnderecoIntegracaoDAO: TEnderecoIntegracaoDAO;
+    procedure ProcessarEndereco(AEndereco: TEndereco);
+  protected
+    procedure Execute; override;
+  public
+    constructor Create(CreateSuspended: Boolean);
+    destructor Destroy; override;
+  end;
+
+implementation
+
+constructor TAtualizaEnderecoThread.Create(CreateSuspended: Boolean);
+begin
+  inherited Create(CreateSuspended);
+  FreeOnTerminate := True;
+  FEnderecoDAO := TEnderecoDAO.Create;
+  FEnderecoIntegracaoDAO := TEnderecoIntegracaoDAO.Create;
+end;
+
+destructor TAtualizaEnderecoThread.Destroy;
+begin
+  FEnderecoDAO.Free;
+  FEnderecoIntegracaoDAO.Free;
+  inherited;
+end;
+
+procedure TAtualizaEnderecoThread.ProcessarEndereco(AEndereco: TEndereco);
+var
+  EnderecoIntegracao: TEnderecoIntegracao;
+begin
+  try
+    // Consulta a API ViaCEP para obter os dados
+    EnderecoIntegracao := THttpUtils.ConsultarViaCEP(AEndereco.DsCep);
+
+    // Verifica se a consulta retornou dados válidos
+    if not Assigned(EnderecoIntegracao) then
+    begin
+      Writeln(Format('Nenhuma informação encontrada para o CEP: %s (ID: %d)',
+        [AEndereco.DsCep, AEndereco.IdEndereco]));
+      Exit;
+    end;
+
+    try
+      // Define o ID do endereço para a integração
+      EnderecoIntegracao.IdEndereco := AEndereco.IdEndereco;
+
+      // Atualiza ou insere os dados no banco
+      FEnderecoIntegracaoDAO.InserirOuAtualizar(EnderecoIntegracao);
+    finally
+      EnderecoIntegracao.Free;
+    end;
+  except
+    on E: Exception do
+    begin
+      // Sincroniza a execução para capturar exceções no contexto correto
+      Synchronize(
+        procedure
+        begin
+          Writeln(Format('Erro ao processar Endereço ID %d (CEP: %s): %s',
+            [AEndereco.IdEndereco, AEndereco.DsCep, E.Message]));
+        end);
+    end;
+  end;
+end;
+
+procedure TAtualizaEnderecoThread.Execute;
+var
+  ListaEnderecos: TList<TEndereco>;
+  Endereco: TEndereco;
+begin
+  ListaEnderecos := FEnderecoDAO.GetAll;
+
+  if not Assigned(ListaEnderecos) then
+    raise Exception.CreateFmt
+      ('Erro: Nenhum endereço encontrado para atualizar.', []);
+
+  try
+    for Endereco in ListaEnderecos do
+    begin
+      try
+        // Processa cada endereço individualmente
+        ProcessarEndereco(Endereco);
+      except
+        on E: Exception do
+        begin
+          // Lança uma exceção específica para cada endereço com detalhes do erro
+          raise Exception.CreateFmt('Erro ao processar endereço ID %d: %s',
+            [Endereco.IdEndereco, E.Message]);
+        end;
+      end;
+    end;
+  finally
+    ListaEnderecos.Free; // Libera a lista se a propriedade for da thread
+  end;
+end;
+
+end.

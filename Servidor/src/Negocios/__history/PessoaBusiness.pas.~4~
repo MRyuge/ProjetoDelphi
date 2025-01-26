@@ -1,0 +1,44 @@
+unit PessoaBusiness;
+
+interface
+
+uses
+  System.SysUtils, PessoaDAO;
+
+type
+  TPessoaBusiness = class
+  private
+    FPessoaDAO: TPessoaDAO;
+  public
+    constructor Create;
+    destructor Destroy; override;
+
+    function AdicionarPessoa(const Nome, Documento: string): string;
+  end;
+
+implementation
+
+{ TPessoaBusiness }
+
+constructor TPessoaBusiness.Create;
+begin
+  inherited Create;
+  FPessoaDAO := TPessoaDAO.Create;
+end;
+
+destructor TPessoaBusiness.Destroy;
+begin
+  FPessoaDAO.Free;
+  inherited Destroy;
+end;
+
+function TPessoaBusiness.AdicionarPessoa(const Nome, Documento: string): string;
+begin
+  if FPessoaDAO.InsertPessoa(Nome, Documento) then
+    Result := 'Pessoa adicionada com sucesso!'
+  else
+    Result := 'Falha ao adicionar pessoa.';
+end;
+
+end.
+

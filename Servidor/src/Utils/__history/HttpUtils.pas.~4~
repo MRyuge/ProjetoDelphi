@@ -1,0 +1,90 @@
+unit HttpUtils;
+
+interface
+
+uses
+  System.SysUtils, EnderecoIntegracao, IdSSLOpenSSL;
+
+type
+  THttpUtils = class
+  public
+    class function GetJSON(const URL: string): TJSONObject;
+    function ConsultarViaCEP(ACep: string): TEnderecoIntegracao;
+  end;
+
+implementation
+
+uses
+  IdHTTP, System.JSON;
+
+{ THttpUtils }
+
+function THttpUtils.ConsultarViaCEP(ACep: string): TEnderecoIntegracao;
+var
+  IdHTTP: TIdHTTP;
+  JsonResponse: TJSONObject;
+  Response: string;
+  EnderecoIntegracao: TEnderecoIntegracao;
+begin
+  Result := nil;
+  if ACep.Trim.IsEmpty then
+    raise Exception.Create('O CEP não pode ser vazio.');
+
+  IdHTTP := TIdHTTP.Create(nil);
+  try
+    try
+      Response := IdHTTP.Get('https://viacep.com.br/ws/' + ACep + '/json/');
+      JsonResponse := TJSONObject.ParseJSONValue(Response) as TJSONObject;
+
+      if Assigned(JsonResponse) then
+      begin
+        EnderecoIntegracao := TEnderecoIntegracao.Create;
+        try
+          EnderecoIntegracao.DsUf := JsonResponse.GetValue<string>('uf', '');
+          EnderecoIntegracao.NmCidade := JsonResponse.GetValue<string>
+            ('localidade', '');
+          EnderecoIntegracao.NmBairro := JsonResponse.GetValue<string>
+            ('bairro', '');
+          EnderecoIntegracao.NmLogradouro := JsonResponse.GetValue<string>
+            ('logradouro', '');
+          EnderecoIntegracao.DsComplemento := JsonResponse.GetValue<string>
+            ('complemento', '');
+          Result := EnderecoIntegracao;
+        except
+          EnderecoIntegracao.Free;
+          raise;
+        end;
+      end
+      else
+        raise Exception.Create('Erro ao interpretar a resposta da API ViaCEP.');
+    except
+      on E: Exception do
+        raise Exception.Create('Erro ao consultar o ViaCEP: ' + E.Message);
+    end;
+  finally
+    IdHTTP.Free;
+  end;
+
+end;
+
+class function THttpUtils.GetJSON(const URL: string): TJSONObject;
+var
+  HTTP: TIdHTTP;
+  SSL: TIdSSLIOHandlerSocketOpenSSL;
+  Response: string;
+begin
+  HTTP := TIdHTTP.Create(nil);
+  SSL := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
+  try
+    HTTP.IOHandler := SSL;
+    HTTP.Request.Accept := 'application/json';
+    Response := HTTP.Get(URL);
+    Result := TJSONObject.ParseJSONValue(Response) as TJSONObject;
+  finally
+    HTTP.Free;
+    SSL.Free;
+  end;
+
+end;
+
+end.

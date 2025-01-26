@@ -1,0 +1,56 @@
+                    unit Pessoa;
+
+interface
+
+type
+  TPessoa = class
+  private
+    FIdPessoa: Int64;
+    FFlNatureza: Integer;
+    FDsDocumento: string;
+    FNmPrimeiro: string;
+    FNmSegundo: string;
+    FDtRegistro: TDateTime;
+  public
+    // Construtor e Destrutor
+    constructor Create; overload;
+    constructor Create(AIdPessoa: Int64; AFlNatureza: Integer; ADsDocumento, ANmPrimeiro, ANmSegundo: string; ADtRegistro: TDateTime); overload;
+    destructor Destroy; override;
+
+    // Propriedades
+    property IdPessoa: Int64 read FIdPessoa write FIdPessoa;
+    property FlNatureza: Integer read FFlNatureza write FFlNatureza;
+    property DsDocumento: string read FDsDocumento write FDsDocumento;
+    property NmPrimeiro: string read FNmPrimeiro write FNmPrimeiro;
+    property NmSegundo: string read FNmSegundo write FNmSegundo;
+    property DtRegistro: TDateTime read FDtRegistro write FDtRegistro;
+  end;
+
+implementation
+
+{ TPessoa }
+
+constructor TPessoa.Create;
+begin
+  inherited Create;
+end;
+
+constructor TPessoa.Create(AIdPessoa: Int64; AFlNatureza: Integer; ADsDocumento, ANmPrimeiro, ANmSegundo: string; ADtRegistro: TDateTime);
+begin
+  inherited Create;
+  FIdPessoa := AIdPessoa;
+  FFlNatureza := AFlNatureza;
+  FDsDocumento := ADsDocumento;
+  FNmPrimeiro := ANmPrimeiro;
+  FNmSegundo := ANmSegundo;
+  FDtRegistro := ADtRegistro;
+end;
+
+destructor TPessoa.Destroy;
+begin
+  // Se necessário, liberar recursos alocados aqui
+  inherited Destroy;
+end;
+
+end.
+

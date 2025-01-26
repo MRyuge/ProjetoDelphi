@@ -1,0 +1,45 @@
+unit ServerModule;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, FireDAC.Comp.Client, FireDAC.Stan.Def,
+  FireDAC.Stan.Async, FireDAC.Phys.PG, FireDAC.Phys.PGDef, FireDAC.UI.Intf,
+  FireDAC.VCLUI.Wait, FireDAC.Comp.UI;
+
+type
+  TServerModule = class(TDataModule)
+    FDConnection: TFDConnection;
+    FDPhysPgDriverLink: TFDPhysPgDriverLink;
+    FDGUIxWaitCursor: TFDGUIxWaitCursor;
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+    procedure ConnectToDatabase;
+  end;
+
+var
+  ServerModule: TServerModule;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+
+procedure TServerModule.ConnectToDatabase;
+begin
+  if not FDConnection.Connected then
+  begin
+    try
+      FDConnection.Connected := True;
+    except
+      on E: Exception do
+        raise Exception.Create('Erro ao conectar ao banco de dados: ' + E.Message);
+    end;
+  end;
+end;
+
+end.
+

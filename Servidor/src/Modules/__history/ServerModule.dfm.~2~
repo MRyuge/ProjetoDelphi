@@ -1,0 +1,5 @@
+object DSServerModule1: TDSServerModule1
+  OldCreateOrder = False
+  Height = 253
+  Width = 380
+end

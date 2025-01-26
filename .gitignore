@@ -1,0 +1,12 @@
+# Ignorar todos os executáveis gerados
+*.exe
+*.dll
+
+# Exceções para incluir binários necessários
+!/server/bin/*.exe
+!/client/bin/*.exe
+
+# Ignorar backups e arquivos temporários
+*.bak
+*.tmp
+*.old

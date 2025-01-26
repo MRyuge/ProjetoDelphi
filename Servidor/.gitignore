@@ -1,0 +1,14 @@
+# Pastas e arquivos gerados pelo Delphi no servidor
+Win32/
+Win64/
+Debug/
+Release/
+*.dcu
+*.dcp
+*.res
+*.map
+*.cfg
+
+# Logs e arquivos temporários
+*.log
+*.tmp

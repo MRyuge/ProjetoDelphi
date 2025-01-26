@@ -1,0 +1,125 @@
+Listagem de caminhos de pasta para o volume Acer
+O n£mero de s‚rie do volume ‚ 7A80-2D03
+C:.
+|   estrutura_completa.txt
+|   estrutura_projeto.txt
+|   FormUnit1.dfm
+|   FormUnit1.pas
+|   listaProjeto.txt
+|   README.md
+|   Server.dpr
+|   Server.dproj
+|   Server.dproj.local
+|   Server.dres
+|   Server.identcache
+|   Server.res
+|   ServerResource.rc
+|   
++---Assets
+|   +---css
+|   |       main.css
+|   |       serverfunctioninvoker.css
+|   |       
+|   +---images
+|   |       collapse.png
+|   |       expand.png
+|   |       
+|   +---js
+|   |       base64-min.js
+|   |       base64.js
+|   |       callbackframework-min.js
+|   |       callbackframework.js
+|   |       connection.js
+|   |       json2-min.js
+|   |       json2.js
+|   |       serverfunctionexecutor-min.js
+|   |       serverfunctionexecutor.js
+|   |       serverfunctioninvoker.js
+|   |       serverfunctions.js
+|   |       
+|   \---templates
+|           reversestring.html
+|           serverfunctioninvoker.html
+|           
++---Business
+|       AtualizaEnderecoThread.pas
+|       EnderecoService.pas
+|       PessoaBusiness.pas
+|       
++---Config
+|       DatabaseConfig.ini
+|       
++---Modules
+|       ServerMethodsUnit.dfm
+|       ServerMethodsUnit.pas
+|       WebModuleUnit.dfm
+|       WebModuleUnit.pas
+|       
++---Persistence
+|       DataModuleDatabase.dfm
+|       DataModuleDatabase.pas
+|       Endereco.pas
+|       EnderecoDAO.pas
+|       EnderecoIntegracao.pas
+|       Pessoa.pas
+|       PessoaBusiness.pas
+|       PessoaDAO.pas
+|       
++---Presentation
+|       FrmTestePessoa.dfm
+|       FrmTestePessoa.pas
+|       
++---Utils
+\---Win32
+    \---Debug
+        |   ArquiteturaDataSnap.exe
+        |   AtualizaEnderecoThread.dcu
+        |   DatabaseModule.dcu
+        |   DataModuleDatabase.dcu
+        |   Endereco.dcu
+        |   EnderecoDAO.dcu
+        |   EnderecoIntegracao.dcu
+        |   EnderecoService.dcu
+        |   FormUnit1.dcu
+        |   FrmTestePessoa.dcu
+        |   libcrypto-1_1.dll
+        |   libiconv-2.dll
+        |   libintl-8.dll
+        |   libpq.dll
+        |   libssl-1_1.dll
+        |   Pessoa.dcu
+        |   PessoaBusiness.dcu
+        |   PessoaDAO.dcu
+        |   Server.exe
+        |   ServerMethodsUnit.dcu
+        |   ServerModule.dcu
+        |   uEndereco.dcu
+        |   uPessoa.dcu
+        |   uServerModule.dcu
+        |   WebModuleUnit.dcu
+        |   
+        +---css
+        |       main.css
+        |       serverfunctioninvoker.css
+        |       
+        +---images
+        |       collapse.png
+        |       expand.png
+        |       
+        +---js
+        |       base64-min.js
+        |       base64.js
+        |       callbackframework-min.js
+        |       callbackframework.js
+        |       connection.js
+        |       json2-min.js
+        |       json2.js
+        |       serverfunctionexecutor-min.js
+        |       serverfunctionexecutor.js
+        |       serverfunctioninvoker.js
+        |       serverfunctions.js
+        |       
+        \---templates
+                reversestring.html
+                serverfunctioninvoker.html
+                

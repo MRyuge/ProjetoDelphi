@@ -1,0 +1,225 @@
+unit EnderecoService;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, System.JSON, HttpClientUtils, Vcl.Dialogs,
+  System.Net.HttpClient;
+
+type
+  TEnderecoService = class
+  private
+    FBaseUrl: string;
+  public
+    constructor Create;
+
+    // Métodos de integração com o servidor
+    function InserirEndereco(const JSON: TJSONObject): Boolean;
+    function AtualizarEndereco(const JSON: TJSONObject): Boolean;
+    function ExcluirEndereco(IdEndereco: Int64): Boolean;
+    function ListarEnderecos: TJSONArray;
+    function BuscarEndereco(IdEndereco: Int64): TJSONObject;
+
+    // API de integração externa
+    procedure AtualizarIntegracaoViaCep;
+    function ConsultarCEP(const CEP: string): TJSONObject;
+  end;
+
+implementation
+
+{ TEnderecoService }
+
+constructor TEnderecoService.Create;
+begin
+  // Lê a URL base do arquivo de configuração
+  FBaseUrl := THttpClientUtils.GetBaseUrl;
+end;
+
+// Insere um endereço
+function TEnderecoService.InserirEndereco(const JSON: TJSONObject): Boolean;
+var
+  Response: TJSONValue;
+begin
+  try
+    // Realiza a requisição POST para inserir o endereço
+    Response := THttpClientUtils.Post(FBaseUrl + '/Endereco', JSON);
+    try
+      Result := Assigned(Response) and (Response.ToString = 'true');
+    finally
+      Response.Free;
+    end;
+  except
+    on E: Exception do
+      raise Exception.Create('Erro ao inserir o endereço: ' + E.Message);
+  end;
+end;
+
+// Atualiza um endereço
+function TEnderecoService.AtualizarEndereco(const JSON: TJSONObject): Boolean;
+var
+  Response: TJSONValue;
+begin
+  try
+    // Realiza a requisição Put para atualizar o endereço
+    Response := THttpClientUtils.Put(FBaseUrl + '/Endereco', JSON);
+    try
+      Result := Assigned(Response) and (Response.ToString = 'true');
+    finally
+      Response.Free;
+    end;
+  except
+    on E: Exception do
+      raise Exception.Create('Erro ao atualizar o endereço: ' + E.Message);
+  end;
+end;
+
+// Exclui um endereço
+function TEnderecoService.ExcluirEndereco(IdEndereco: Int64): Boolean;
+var
+  Response: TJSONValue;
+begin
+  try
+    // Realiza a requisição DELETE para excluir o endereço
+    Response := THttpClientUtils.Delete(FBaseUrl + '/Endereco/' +
+      IdEndereco.ToString);
+    try
+      Result := Assigned(Response) and (Response.ToString = 'true');
+    finally
+      Response.Free;
+    end;
+  except
+    on E: Exception do
+      raise Exception.Create('Erro ao excluir o endereço: ' + E.Message);
+  end;
+end;
+
+// Lista todos os endereços
+function TEnderecoService.ListarEnderecos: TJSONArray;
+var
+  HttpClient: THTTPClient;
+  Response: IHTTPResponse;
+  ResponseString: string;
+  ResponseJSONObject: TJSONObject;
+  ResultArray: TJSONArray;
+begin
+  Result := nil;
+  HttpClient := THTTPClient.Create;
+  try
+    try
+      // Realiza a requisição GET
+      Response := HttpClient.Get(FBaseUrl + '/ListarEnderecos');
+
+      // Verifica se a resposta foi bem-sucedida
+      if Response.StatusCode = 200 then
+      begin
+        // Converte a resposta para string
+        ResponseString := Response.ContentAsString;
+
+        // Verifica se a resposta é um TJSONObject
+        ResponseJSONObject := TJSONObject.ParseJSONValue(ResponseString)
+          as TJSONObject;
+        if Assigned(ResponseJSONObject) then
+        begin
+          // Tenta extrair o array de endereços que pode estar no campo 'result'
+          if ResponseJSONObject.TryGetValue<TJSONArray>('result', ResultArray)
+          then
+          begin
+            Result := ResultArray.Clone as TJSONArray;
+          end
+          else
+            raise Exception.Create
+              ('Campo "result" não encontrado na resposta.');
+        end
+        else
+        begin
+          // Tenta interpretar a resposta como um TJSONArray diretamente
+          Result := TJSONObject.ParseJSONValue(ResponseString) as TJSONArray;
+          if not Assigned(Result) then
+            raise Exception.Create
+              ('Resposta não é um TJSONArray ou não contém o campo "result".');
+        end;
+      end
+      else
+        raise Exception.Create('Erro na requisição: ' + Response.StatusText);
+    except
+      on E: Exception do
+        raise Exception.Create('Erro ao listar os endereços: ' + E.Message);
+    end;
+  finally
+    HttpClient.Free;
+  end;
+end;
+
+// Busca um endereço por ID
+function TEnderecoService.BuscarEndereco(IdEndereco: Int64): TJSONObject;
+var
+  Response: TJSONValue;
+begin
+  Result := nil;
+  try
+    // Realiza a requisição GET para buscar o endereço pelo ID
+    Response := THttpClientUtils.Get(FBaseUrl + '/BuscarEndereco/' +
+      IdEndereco.ToString);
+    try
+      if Assigned(Response) and (Response is TJSONObject) then
+        Result := TJSONObject(Response.Clone)
+      else
+        raise Exception.Create('Resposta da API não é um objeto JSON válido.');
+    finally
+      Response.Free;
+    end;
+  except
+    on E: Exception do
+      raise Exception.Create('Erro ao buscar o endereço: ' + E.Message);
+  end;
+end;
+
+// Consulta um CEP externo via API ViaCEP
+function TEnderecoService.ConsultarCEP(const CEP: string): TJSONObject;
+var
+  URL: string;
+  Response: TJSONValue;
+begin
+  Result := nil;
+  try
+    // Monta a URL para a consulta do CEP
+    URL := 'https://viacep.com.br/ws/' + CEP + '/json/';
+    Response := THttpClientUtils.Get(URL);
+    try
+      if Assigned(Response) and (Response is TJSONObject) then
+        Result := TJSONObject(Response.Clone)
+      else
+        raise Exception.Create
+          ('Resposta da API ViaCEP não é um objeto JSON válido.');
+    finally
+      Response.Free;
+    end;
+  except
+    on E: Exception do
+      raise Exception.Create('Erro ao consultar o CEP: ' + E.Message);
+  end;
+end;
+
+// Atualiza endereços usando integração com ViaCEP
+procedure TEnderecoService.AtualizarIntegracaoViaCep;
+var
+  Response: TJSONValue;
+begin
+  try
+    Response := THttpClientUtils.Post
+      (FBaseUrl +
+      '/datasnap/rest/TDSServerModule1/AtualizarIntegracaoViaCep', nil);
+    try
+      if not(Assigned(Response) and (Response.ToString = 'true')) then
+        raise Exception.Create('Erro ao iniciar a atualização dos endereços.');
+    finally
+      Response.Free;
+    end;
+  except
+    on E: Exception do
+      raise Exception.Create('Erro ao atualizar integração de endereços: ' +
+        E.Message);
+  end;
+end;
+
+end.

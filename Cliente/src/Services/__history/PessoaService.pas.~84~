@@ -1,0 +1,351 @@
+unit PessoaService;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, Vcl.Dialogs, Vcl.StdCtrls, System.JSON,
+  HttpClientUtils, System.DateUtils, System.Net.HttpClient;
+
+type
+  TPessoaService = class
+  private
+    FBaseUrl: string;
+    procedure LogMensagem(Memo: TMemo; const Msg: string);
+
+  public
+    constructor Create;
+    function AtualizarPessoa(AIdPessoa, AFlNatureza: Integer;
+      const ADsDocumento, ANmPrimeiro, ANmSegundo: string;
+      ADtRegistro: TDateTime): Boolean;
+    function ExcluirPessoa(IdPessoa: Int64): Boolean;
+    function BuscarPessoa(IdPessoa: Int64): TJSONObject;
+
+    function InserirPessoa(FlNatureza: Integer;
+      DsDocumento, NmPrimeiro, NmSegundo: string;
+      DtRegistro: TDateTime): Boolean;
+    function ListarPessoas(Memo: TMemo): TJSONArray;
+
+    function UpdatePessoaEmLote(const JSON: TJSONArray): Boolean;
+
+  end;
+
+implementation
+
+constructor TPessoaService.Create;
+begin
+  FBaseUrl := THttpClientUtils.GetBaseUrl; // Lê a URL do AppConfig.ini
+end;
+
+function TPessoaService.InserirPessoa(FlNatureza: Integer;
+  DsDocumento, NmPrimeiro, NmSegundo: string; DtRegistro: TDateTime): Boolean;
+var
+  JSONBody: TJSONObject;
+  Response: TJSONValue;
+  JsonObj: TJSONObject;
+  ResultArray: TJSONArray;
+begin
+  Result := False; // Inicializa como falso
+  JSONBody := TJSONObject.Create;
+
+  try
+    // Monta o corpo JSON da requisição
+    JSONBody.AddPair('FlNatureza', TJSONNumber.Create(FlNatureza));
+    JSONBody.AddPair('DsDocumento', DsDocumento);
+    JSONBody.AddPair('NmPrimeiro', NmPrimeiro);
+    JSONBody.AddPair('NmSegundo', NmSegundo);
+    JSONBody.AddPair('DtRegistro', DateToISO8601(DtRegistro));
+
+    try
+      // Realiza a requisição POST usando o HttpClientUtils
+      Response := THttpClientUtils.Post(FBaseUrl + '/Pessoa', JSONBody);
+
+      // Verifica se a resposta foi recebida e é válida
+      if Assigned(Response) and (Response is TJSONObject) then
+      begin
+        JsonObj := TJSONObject(Response);
+
+        // Verifica se a chave "result" existe no JSON e se é um array
+        if JsonObj.TryGetValue<TJSONArray>('result', ResultArray) then
+        begin
+          // Verifica se o primeiro elemento do array é verdadeiro
+          if (ResultArray.Count > 0) and (ResultArray.Items[0].Value = 'true')
+          then
+            Result := True
+          else
+            raise Exception.Create
+              ('Erro ao inserir pessoa: operação não foi bem-sucedida.');
+        end
+        else
+          raise Exception.Create
+            ('Erro ao inserir pessoa: chave "result" não encontrada ou inválida.');
+      end
+      else
+        raise Exception.Create
+          ('Erro ao inserir pessoa: resposta inválida do servidor.');
+
+    finally
+      // Libera o JSON da memória após o uso
+      JSONBody.Free;
+      if Assigned(Response) then
+        Response.Free;
+    end;
+
+  except
+    on E: Exception do
+    begin
+      Result := False;
+      raise Exception.Create('Erro ao inserir pessoa: ' + E.Message);
+    end;
+  end;
+end;
+
+function TPessoaService.AtualizarPessoa(AIdPessoa, AFlNatureza: Integer;
+  const ADsDocumento, ANmPrimeiro, ANmSegundo: string;
+  ADtRegistro: TDateTime): Boolean;
+var
+  JSONBody: TJSONObject;
+  Response: TJSONValue;
+  JsonObj: TJSONObject;
+  ResultArray: TJSONArray;
+begin
+  Result := False; // Inicializa como falso
+  JSONBody := TJSONObject.Create;
+
+  try
+    // Monta o corpo JSON da requisição
+    JSONBody.AddPair('IdPessoa', TJSONNumber.Create(AIdPessoa));
+    JSONBody.AddPair('FlNatureza', TJSONNumber.Create(AFlNatureza));
+    JSONBody.AddPair('DsDocumento', ADsDocumento);
+    JSONBody.AddPair('NmPrimeiro', ANmPrimeiro);
+    JSONBody.AddPair('NmSegundo', ANmSegundo);
+    JSONBody.AddPair('DtRegistro', DateToISO8601(ADtRegistro));
+
+    try
+      // Realiza a requisição PUT usando o HttpClientUtils
+      Response := THttpClientUtils.Put(FBaseUrl + '/Pessoa', JSONBody);
+
+      // Verifica se a resposta foi recebida e é válida
+      if Assigned(Response) and (Response is TJSONObject) then
+      begin
+        JsonObj := TJSONObject(Response);
+
+        // Verifica se a chave "result" existe no JSON e se é um array
+        if JsonObj.TryGetValue<TJSONArray>('result', ResultArray) then
+        begin
+          // Verifica se o primeiro elemento do array é verdadeiro
+          if (ResultArray.Count > 0) and (ResultArray.Items[0].Value = 'true')
+          then
+            Result := True
+          else
+            raise Exception.Create
+              ('Erro ao atualizar pessoa: operação não foi bem-sucedida.');
+        end
+        else
+          raise Exception.Create
+            ('Erro ao atualizar pessoa: chave "result" não encontrada ou inválida.');
+      end
+      else
+        raise Exception.Create
+          ('Erro ao atualizar pessoa: resposta inválida do servidor.');
+
+    finally
+      // Libera o JSON da memória após o uso
+      JSONBody.Free;
+      if Assigned(Response) then
+        Response.Free;
+    end;
+
+  except
+    on E: Exception do
+    begin
+      Result := False;
+      raise Exception.Create('Erro ao atualizar pessoa: ' + E.Message);
+    end;
+  end;
+end;
+
+function TPessoaService.ExcluirPessoa(IdPessoa: Int64): Boolean;
+var
+  URL: string;
+  ResponseJson: TJSONValue;
+  JsonObj: TJSONObject;
+  ResultArray: TJSONArray;
+begin
+  Result := False; // Inicializa como falso por padrão
+
+  try
+    // Monta a URL para a requisição DELETE
+    URL := FBaseUrl + '/pessoa/' + IdPessoa.ToString;
+
+    // Realiza a requisição DELETE e obtém a resposta em formato JSON
+    ResponseJson := THttpClientUtils.Delete(URL);
+
+    try
+      // Verifica se a resposta é um objeto JSON válido
+      if not(ResponseJson is TJSONObject) then
+        raise Exception.Create
+          ('A resposta do servidor não é um objeto JSON válido.');
+
+      // Faz o cast explícito para TJSONObject
+      JsonObj := TJSONObject(ResponseJson);
+
+      // Verifica se existe a chave "result" e se ela é uma TJSONArray
+      if JsonObj.TryGetValue<TJSONArray>('result', ResultArray) then
+      begin
+        // Verifica se o primeiro elemento da lista é um valor booleano e é "true"
+        if (ResultArray.Count > 0) and (ResultArray.Items[0].Value = 'true')
+        then
+        begin
+          Result := True; // Exclusão bem-sucedida
+        end
+        else
+        begin
+          raise Exception.Create('A operação falhou. O servidor retornou: ' +
+            ResultArray.ToString);
+        end;
+      end
+      else
+        raise Exception.Create
+          ('A chave "result" não foi encontrada ou não é válida na resposta do servidor.');
+
+    finally
+      // Libera o JSON da memória após o uso
+      ResponseJson.Free;
+    end;
+
+  except
+    on E: Exception do
+    begin
+      // Lança uma exceção com detalhes do erro
+      raise Exception.Create('Erro ao excluir pessoa: ' + E.Message);
+    end;
+  end;
+end;
+
+function TPessoaService.BuscarPessoa(IdPessoa: Int64): TJSONObject;
+var
+  Response: TJSONValue;
+begin
+  Response := THttpClientUtils.Get(FBaseUrl + '/BuscarPessoa/' +
+    IdPessoa.ToString);
+  try
+    if Assigned(Response) and (Response is TJSONObject) then
+      Result := TJSONObject(Response.Clone)
+    else
+      raise Exception.Create('Erro ao buscar pessoa: resposta inválida.');
+  finally
+    Response.Free;
+  end;
+end;
+
+function TPessoaService.ListarPessoas(Memo: TMemo): TJSONArray;
+var
+  HttpClient: THTTPClient;
+  Response: IHTTPResponse;
+  ResponseString: string;
+  ResponseJSONObject: TJSONObject;
+  ResultArray: TJSONArray;
+begin
+  Result := nil;
+  HttpClient := THTTPClient.Create;
+  try
+    // Realiza a requisição GET
+    Response := HttpClient.Get(FBaseUrl + '/ListarPessoas');
+
+    // Verifica se a resposta foi bem-sucedida
+    if Response.StatusCode = 200 then
+    begin
+      // Converte a resposta para TJSONObject
+      ResponseString := Response.ContentAsString;
+      LogMensagem(Memo, 'Resposta recebida: ' + ResponseString);
+
+      // Verifica se a resposta é um TJSONObject
+      ResponseJSONObject := TJSONObject.ParseJSONValue(ResponseString)
+        as TJSONObject;
+      if Assigned(ResponseJSONObject) then
+      begin
+        // Tenta extrair o array de pessoas que pode estar no campo 'result'
+        if ResponseJSONObject.TryGetValue<TJSONArray>('result', ResultArray)
+        then
+        begin
+          // Exibe a resposta no Memo para depuração
+          LogMensagem(Memo, 'Campo "result" encontrado no TJSONObject');
+          Result := ResultArray; // Retorna o array de pessoas
+        end
+        else
+        begin
+          // Se o campo 'result' não for encontrado, exibe os campos presentes no TJSONObject
+          LogMensagem(Memo, 'Campos no TJSONObject: ' +
+            ResponseJSONObject.ToString);
+          raise Exception.Create('Campo "result" não encontrado na resposta.');
+        end;
+      end
+      else
+      begin
+        raise Exception.Create('Resposta não é um TJSONObject válido.');
+      end;
+    end
+    else
+      raise Exception.Create('Erro ao listar pessoas: ' + Response.StatusText);
+  finally
+    HttpClient.Free;
+  end;
+end;
+
+function TPessoaService.UpdatePessoaEmLote(const JSON: TJSONArray): Boolean;
+var
+  Response: TJSONValue;
+  JSONRequest: TJSONObject;
+  JSONResponse: TJSONObject;
+  ResultArray: TJSONArray;
+begin
+  Result := False; // Inicializa o resultado como falso
+
+  try
+    // Cria um objeto JSON para encapsular o array de pessoas
+    JSONRequest := TJSONObject.Create;
+    try
+      JSONRequest.AddPair('Lote', JSON.Clone as TJSONArray);
+
+      // Realiza a requisição POST para atualizar pessoas em lote
+      Response := THttpClientUtils.Post(FBaseUrl + '/PessoaEmLote',
+        JSONRequest);
+      try
+        // Verifica se a resposta foi retornada
+        if Assigned(Response) and (Response is TJSONObject) then
+        begin
+          JSONResponse := TJSONObject(Response);
+
+          // Verifica se o campo "result" existe e é um array
+          if JSONResponse.TryGetValue<TJSONArray>('result', ResultArray) then
+          begin
+            // Verifica se o array contém pelo menos um valor booleano "true"
+            if (ResultArray.Count > 0) and (ResultArray.Items[0] is TJSONBool)
+            then
+              Result := TJSONBool(ResultArray.Items[0]).AsBoolean;
+          end
+          else
+            raise Exception.Create
+              ('Campo "result" não encontrado na resposta.');
+        end
+        else
+          raise Exception.Create
+            ('Resposta da API não é um objeto JSON válido.');
+      finally
+        Response.Free;
+      end;
+    finally
+      JSONRequest.Free;
+    end;
+  except
+    on E: Exception do
+      raise Exception.Create('Erro ao atualizar pessoas em lote: ' + E.Message);
+  end;
+end;
+
+procedure TPessoaService.LogMensagem(Memo: TMemo; const Msg: string);
+begin
+  Memo.Lines.Add(Msg); // Adiciona a mensagem ao Memo
+end;
+
+end.

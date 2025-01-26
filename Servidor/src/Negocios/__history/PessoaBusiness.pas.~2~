@@ -1,0 +1,43 @@
+unit PessoaBusiness;
+
+interface
+
+uses
+  uPessoa, PessoaDAO;
+
+type
+  TPessoaBusiness = class
+  private
+    FPessoaDAO: TPessoaDAO;
+  public
+    constructor Create;
+    destructor Destroy; override;
+
+    function CreatePessoa(const APessoa: TPessoa): Boolean;
+  end;
+
+implementation
+
+{ TPessoaBusiness }
+
+constructor TPessoaBusiness.Create;
+begin
+  FPessoaDAO := TPessoaDAO.Create;
+end;
+
+destructor TPessoaBusiness.Destroy;
+begin
+  FPessoaDAO.Free;
+  inherited;
+end;
+
+function TPessoaBusiness.CreatePessoa(const APessoa: TPessoa): Boolean;
+begin
+  if APessoa.NmPrimeiro.IsEmpty then
+    raise Exception.Create('Nome não pode ser vazio.');
+
+  Result := FPessoaDAO.InsertPessoa(APessoa);
+end;
+
+end.
+

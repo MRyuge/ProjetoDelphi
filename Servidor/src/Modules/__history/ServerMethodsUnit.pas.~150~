@@ -1,0 +1,470 @@
+unit ServerMethodsUnit;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, Datasnap.DSServer, Datasnap.DSAuth,
+  Datasnap.DSProviderDataModuleAdapter, FireDAC.DApt,
+  System.Generics.Collections, Math,
+  Pessoa, PessoaDAO, Endereco, EnderecoDAO, EnderecoIntegracaoDAO, EnderecoIntegracao,
+  System.JSON, AtualizaEnderecoThread, DataModuleDatabase, System.DateUtils;
+
+type
+{$METHODINFO ON}
+  TDSServerModule1 = class(TDSServerModule)
+  private
+
+  public
+    // Pessoa
+    [DSMethod]
+    function updatePessoa(const JSON: string): Boolean;
+    [DSMethod]
+    function acceptPessoa(const JSON: string): Boolean;
+    [DSMethod]
+    function cancelPessoa(IdPessoa: Int64): Boolean;
+    [DSMethod]
+    function ListarPessoas: String;
+    [DSMethod]
+    function updatePessoaEmLote(const JSON: string): Boolean;
+
+    // Endereço
+    [DSMethod]
+    function updateEndereco(const JSON: string): Boolean;
+    [DSMethod]
+    function acceptEndereco(const JSON: string): Boolean;
+    [DSMethod]
+    function cancelEndereco(IdEndereco: Int64): Boolean;
+    [DSMethod]
+    function ListarEnderecos: String;
+
+    [DSMethod]
+    function BuscarPessoa(IdPessoa: Int64): TJSONObject;
+
+    // Atualização de integração
+    [DSMethod]
+    procedure AtualizarIntegracaoViaCep;
+    [DSMethod]
+    function BuscarEnderecoIntegracao(IdEndereco: Int64): TJSONObject;
+  end;
+
+{$METHODINFO OFF}
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+{$R *.dfm}
+
+uses
+  HttpUtils;
+
+{ TDSServerModule1 }
+
+procedure LogToFile(const Msg: string);
+var
+  LogFile: TextFile;
+begin
+  AssignFile(LogFile, 'Log.txt'); // Nome do arquivo de log
+  if FileExists('Log.txt') then
+    Append(LogFile)
+  else
+    Rewrite(LogFile);
+  try
+    Writeln(LogFile, FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ' - ' + Msg);
+  finally
+    CloseFile(LogFile);
+  end;
+end;
+
+// Pessoa - Inserir
+function TDSServerModule1.updatePessoa(const JSON: string): Boolean;
+var
+  JSONObject: TJSONObject;
+  FlNatureza: Integer;
+  DsDocumento, NmPrimeiro, NmSegundo: string;
+  DtRegistro: TDateTime;
+  Pessoa: TPessoa;
+  DAO: TPessoaDAO;
+begin
+  Result := False;
+  DAO := TPessoaDAO.Create;
+  try
+    // Parse o JSON para extrair os valores
+    JSONObject := TJSONObject.ParseJSONValue(JSON) as TJSONObject;
+    try
+      FlNatureza := JSONObject.GetValue<Integer>('FlNatureza');
+      DsDocumento := JSONObject.GetValue<string>('DsDocumento');
+      NmPrimeiro := JSONObject.GetValue<string>('NmPrimeiro');
+      NmSegundo := JSONObject.GetValue<string>('NmSegundo');
+      DtRegistro := JSONObject.GetValue<TDateTime>('DtRegistro');
+
+      // Crie a instância da pessoa
+      Pessoa := TPessoa.Create(0, FlNatureza, DsDocumento, NmPrimeiro,
+        NmSegundo, DtRegistro);
+      try
+        // Atualize a pessoa no banco
+        Result := DAO.Insert(Pessoa);
+        // Você pode usar um método Update se necessário
+      finally
+        Pessoa.Free;
+      end;
+    finally
+      JSONObject.Free;
+    end;
+  finally
+    DAO.Free;
+  end;
+end;
+
+// Pessoa - Atualizar
+function TDSServerModule1.acceptPessoa(const JSON: string): Boolean;
+var
+  JSONObject: TJSONObject;
+  IdPessoa, FlNatureza: Integer;
+  DsDocumento, NmPrimeiro, NmSegundo: string;
+  DtRegistro: TDateTime;
+  Pessoa: TPessoa;
+  DAO: TPessoaDAO;
+begin
+  Result := False;
+  DAO := TPessoaDAO.Create;
+  try
+    // Parse o JSON para extrair os valores
+    JSONObject := TJSONObject.ParseJSONValue(JSON) as TJSONObject;
+    try
+      IdPessoa := JSONObject.GetValue<Integer>('IdPessoa');
+      FlNatureza := JSONObject.GetValue<Integer>('FlNatureza');
+      DsDocumento := JSONObject.GetValue<string>('DsDocumento');
+      NmPrimeiro := JSONObject.GetValue<string>('NmPrimeiro');
+      NmSegundo := JSONObject.GetValue<string>('NmSegundo');
+      DtRegistro := JSONObject.GetValue<TDateTime>('DtRegistro');
+
+      // Crie a instância da pessoa com os valores extraídos
+      Pessoa := TPessoa.Create(IdPessoa, FlNatureza, DsDocumento, NmPrimeiro,
+        NmSegundo, DtRegistro);
+      try
+        // Atualize a pessoa no banco
+        Result := DAO.Update(Pessoa);
+      finally
+        Pessoa.Free;
+      end;
+    finally
+      JSONObject.Free;
+    end;
+  finally
+    DAO.Free;
+  end;
+end;
+
+function TDSServerModule1.BuscarPessoa(IdPessoa: Int64): TJSONObject;
+var
+  DAO: TPessoaDAO;
+  Pessoa: TPessoa;
+  JSONResult: TJSONObject;
+begin
+  JSONResult := TJSONObject.Create;
+  DAO := TPessoaDAO.Create;
+  try
+    Pessoa := DAO.GetById(IdPessoa);
+    if Assigned(Pessoa) then
+    begin
+      JSONResult.AddPair('IdPessoa', TJSONNumber.Create(Pessoa.IdPessoa))
+        .AddPair('FlNatureza', TJSONNumber.Create(Pessoa.FlNatureza))
+        .AddPair('DsDocumento', Pessoa.DsDocumento).AddPair('NmPrimeiro',
+        Pessoa.NmPrimeiro).AddPair('NmSegundo', Pessoa.NmSegundo)
+        .AddPair('DtRegistro', DateToISO8601(Pessoa.DtRegistro));
+    end
+    else
+      raise Exception.Create('Pessoa não encontrada.');
+
+    Result := JSONResult; // Retorna o objeto JSON diretamente
+  finally
+    DAO.Free;
+    Pessoa.Free;
+  end;
+end;
+
+// Pessoa - Excluir
+function TDSServerModule1.cancelPessoa(IdPessoa: Int64): Boolean;
+var
+  DAO: TPessoaDAO;
+begin
+  DAO := TPessoaDAO.Create;
+  try
+    Result := DAO.Delete(IdPessoa);
+    if not Result then
+      raise Exception.Create('Falha ao excluir pessoa.');
+  finally
+    DAO.Free;
+  end;
+end;
+
+// Pessoa - Listar
+function TDSServerModule1.ListarPessoas: String;
+var
+  DAO: TPessoaDAO;
+  Lista: TList<TPessoa>;
+  JSONResult: TStringBuilder;
+  Pessoa: TPessoa;
+begin
+  DAO := TPessoaDAO.Create;
+  JSONResult := TStringBuilder.Create;
+  try
+    Lista := DAO.GetAll;
+    try
+      JSONResult.Append('[');
+      for Pessoa in Lista do
+      begin
+        JSONResult.Append('{');
+        JSONResult.AppendFormat('"IdPessoa": %d,', [Pessoa.IdPessoa]);
+        JSONResult.AppendFormat('"FlNatureza": %d,', [Pessoa.FlNatureza]);
+        JSONResult.AppendFormat('"DsDocumento": "%s",', [Pessoa.DsDocumento]);
+        JSONResult.AppendFormat('"NmPrimeiro": "%s",', [Pessoa.NmPrimeiro]);
+        JSONResult.AppendFormat('"NmSegundo": "%s",', [Pessoa.NmSegundo]);
+        JSONResult.AppendFormat('"DtRegistro": "%s"',
+          [DateToISO8601(Pessoa.DtRegistro)]);
+        JSONResult.Append('},');
+      end;
+      if JSONResult.Length > 1 then
+        JSONResult.Length := JSONResult.Length - 1;
+      JSONResult.Append(']');
+      Result := JSONResult.ToString;
+
+      // Log do JSON gerado
+      // OutputDebugString(PChar('JSONResult (Servidor): ' + Result));
+    finally
+      Lista.Free;
+    end;
+  finally
+    DAO.Free;
+    JSONResult.Free;
+  end;
+end;
+
+// Pessoa - Inserir em Lote
+function TDSServerModule1.updatePessoaEmLote(const JSON: string): Boolean;
+const
+  LOTE_TAMANHO = 500; // Tamanho do lote
+var
+  JSONArray: TJSONArray;
+  Lote: TJSONArray;
+  I, LoteInicio, LoteFim: Integer;
+  DAO: TPessoaDAO;
+begin
+  Result := False;
+  JSONArray := TJSONObject.ParseJSONValue(JSON) as TJSONArray;
+  DAO := TPessoaDAO.Create;
+  try
+    LoteInicio := 0;
+
+    while LoteInicio < JSONArray.Count do
+    begin
+      // Define o fim do lote
+      LoteFim := Min(LoteInicio + LOTE_TAMANHO, JSONArray.Count);
+
+      // Cria o lote
+      Lote := TJSONArray.Create;
+      try
+        for I := LoteInicio to LoteFim - 1 do
+          Lote.AddElement(JSONArray.Items[I].Clone as TJSONValue);
+
+        // Chama o método InsertLote do DAO
+        if not DAO.InsertLote(Lote) then
+          raise Exception.CreateFmt('Erro ao processar lote de %d a %d.',
+            [LoteInicio, LoteFim - 1]);
+
+        LogToFile(Format('Lote de %d a %d inserido com sucesso.',
+          [LoteInicio, LoteFim - 1]));
+      finally
+        Lote.Free;
+      end;
+
+      LoteInicio := LoteFim; // Avança para o próximo lote
+    end;
+
+    Result := True;
+  finally
+    DAO.Free;
+    JSONArray.Free;
+  end;
+end;
+
+// Endereço - Inserir
+function TDSServerModule1.updateEndereco(const JSON: string): Boolean;
+var
+  EnderecoJSON: TJSONObject;
+  Endereco: TEndereco;
+  DAO: TEnderecoDAO;
+  IdPessoa: Int64;
+  DsCep: string;
+begin
+  Result := False;
+  DAO := TEnderecoDAO.Create;
+  try
+    // Parse o JSON para um TJSONObject
+    EnderecoJSON := TJSONObject.ParseJSONValue(JSON) as TJSONObject;
+    if not Assigned(EnderecoJSON) then
+      raise Exception.Create('JSON inválido.');
+
+    try
+      // Valide e extraia os valores do JSON
+      if not EnderecoJSON.TryGetValue<Int64>('IdPessoa', IdPessoa) then
+        raise Exception.Create('Campo "IdPessoa" está ausente no JSON.');
+
+      if not EnderecoJSON.TryGetValue<string>('DsCep', DsCep) then
+        raise Exception.Create('Campo "DsCep" está ausente no JSON.');
+
+      // Cria a instância de TEndereco com os valores extraídos
+      Endereco := TEndereco.Create(0, IdPessoa, DsCep);
+      try
+        // Insere o endereço no banco de dados
+        Result := DAO.Insert(Endereco);
+      finally
+        Endereco.Free; // Libera o objeto corretamente
+      end;
+    finally
+      EnderecoJSON.Free; // Libera o JSON
+    end;
+  finally
+    DAO.Free; // Libera o DAO
+  end;
+end;
+
+// Endereço - Atualizar
+function TDSServerModule1.acceptEndereco(const JSON: string): Boolean;
+var
+  EnderecoJSON: TJSONObject;
+  Endereco: TEndereco;
+  EnderecoDAO: TEnderecoDAO;
+  PessoaDAO: TPessoaDAO;
+  IdEndereco, IdPessoa: Int64;
+  DsCep: string;
+begin
+  Result := False;
+  EnderecoDAO := TEnderecoDAO.Create;
+  PessoaDAO := TPessoaDAO.Create;
+  try
+    // Parse o JSON para um TJSONObject
+    EnderecoJSON := TJSONObject.ParseJSONValue(JSON) as TJSONObject;
+    if not Assigned(EnderecoJSON) then
+      raise Exception.Create('JSON inválido.');
+
+    try
+      // Extração e validação dos dados do JSON
+      if not EnderecoJSON.TryGetValue<Int64>('IdEndereco', IdEndereco) then
+        raise Exception.Create('Campo "IdEndereco" está ausente no JSON.');
+
+      if not EnderecoDAO.EnderecoExiste(IdEndereco) then
+        raise Exception.CreateFmt
+          ('O IdEndereco %d não existe na tabela "endereco".', [IdEndereco]);
+
+      if not EnderecoJSON.TryGetValue<Int64>('IdPessoa', IdPessoa) then
+        raise Exception.Create('Campo "IdPessoa" está ausente no JSON.');
+
+      if not PessoaDAO.PessoaExiste(IdPessoa) then
+        raise Exception.CreateFmt
+          ('O IdPessoa %d não existe na tabela "pessoa".', [IdPessoa]);
+
+      if not EnderecoJSON.TryGetValue<string>('DsCep', DsCep) then
+        raise Exception.Create('Campo "DsCep" está ausente no JSON.');
+
+      // Cria a instância de TEndereco com os valores extraídos
+      Endereco := TEndereco.Create(IdEndereco, IdPessoa, DsCep);
+      try
+        // Atualiza o endereço no banco de dados
+        Result := EnderecoDAO.Update(Endereco);
+      finally
+        Endereco.Free; // Libera o objeto corretamente
+      end;
+    finally
+      EnderecoJSON.Free; // Libera o JSON
+    end;
+  finally
+    EnderecoDAO.Free; // Libera o DAO de endereço
+    PessoaDAO.Free; // Libera o DAO de pessoa
+  end;
+end;
+
+// Endereço - Excluir
+function TDSServerModule1.cancelEndereco(IdEndereco: Int64): Boolean;
+var
+  DAO: TEnderecoDAO;
+begin
+  DAO := TEnderecoDAO.Create;
+  try
+    // Verifica o retorno do método Delete
+    if not DAO.Delete(IdEndereco) then
+      raise Exception.CreateFmt
+        ('O IdEndereco %d não existe na tabela "endereco".', [IdEndereco]);
+
+    // Se chegou aqui, a exclusão foi bem-sucedida
+    Result := True;
+  finally
+    DAO.Free;
+  end;
+end;
+
+// Endereço - Listar
+function TDSServerModule1.ListarEnderecos: String;
+var
+  DAO: TEnderecoDAO;
+  Lista: TList<TEndereco>;
+  JSONResult: TJSONArray;
+  Endereco: TEndereco;
+begin
+  DAO := TEnderecoDAO.Create;
+  JSONResult := TJSONArray.Create;
+  try
+    Lista := DAO.GetAll;
+    try
+      for Endereco in Lista do
+        JSONResult.AddElement(Endereco.ToJSON);
+      // Implementação sugerida na classe TEndereco
+      Result := JSONResult.ToString;
+    finally
+      Lista.Free;
+    end;
+  finally
+    DAO.Free;
+    JSONResult.Free;
+  end;
+end;
+
+// Atualização de Integração ViaCEP
+procedure TDSServerModule1.AtualizarIntegracaoViaCep;
+begin
+  TAtualizaEnderecoThread.Create(False);
+end;
+
+function TDSServerModule1.BuscarEnderecoIntegracao(IdEndereco: Int64)
+  : TJSONObject;
+var
+  DAO: TEnderecoIntegracaoDAO;
+  EnderecoIntegracao: TEnderecoIntegracao;
+begin
+  Result := TJSONObject.Create;
+  DAO := TEnderecoIntegracaoDAO.Create;
+  try
+    EnderecoIntegracao := DAO.GetByIdEndereco(IdEndereco);
+    try
+      if Assigned(EnderecoIntegracao) then
+      begin
+        Result.AddPair('IdEndereco',
+          TJSONNumber.Create(EnderecoIntegracao.IdEndereco));
+        Result.AddPair('DsUf', EnderecoIntegracao.DsUf);
+        Result.AddPair('NmCidade', EnderecoIntegracao.NmCidade);
+        Result.AddPair('NmBairro', EnderecoIntegracao.NmBairro);
+        Result.AddPair('NmLogradouro', EnderecoIntegracao.NmLogradouro);
+        Result.AddPair('DsComplemento', EnderecoIntegracao.DsComplemento);
+      end
+      else
+        raise Exception.CreateFmt
+          ('Endereço de integração com ID %d não encontrado.', [IdEndereco]);
+    finally
+      EnderecoIntegracao.Free;
+    end;
+  finally
+    DAO.Free;
+  end;
+end;
+
+end.

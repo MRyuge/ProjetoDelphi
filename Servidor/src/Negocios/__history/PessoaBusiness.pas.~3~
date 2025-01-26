@@ -1,0 +1,45 @@
+unit PessoaBusiness;
+
+interface
+
+uses
+  uPessoa, PessoaDAO, System.SysUtils;
+
+type
+  TPessoaBusiness = class
+  private
+    FPessoaDAO: TPessoaDAO;
+  public
+    constructor Create;
+    destructor Destroy; override;
+
+    function CreatePessoa(const APessoa: TPessoa): Boolean;
+  end;
+
+implementation
+
+{ TPessoaBusiness }
+
+constructor TPessoaBusiness.Create;
+begin
+  FPessoaDAO := TPessoaDAO.Create;
+end;
+
+destructor TPessoaBusiness.Destroy;
+begin
+  FPessoaDAO.Free;
+  inherited;
+end;
+
+function TPessoaBusiness.CreatePessoa(const APessoa: TPessoa): Boolean;
+begin
+  // Verificar se o nome da pessoa é válido
+  if Trim(APessoa.NmPrimeiro) = '' then
+    raise Exception.Create('O nome da pessoa não pode ser vazio.');
+
+  // Inserir a pessoa no banco de dados usando o DAO
+  Result := FPessoaDAO.InsertPessoa(APessoa);
+end;
+
+end.
+

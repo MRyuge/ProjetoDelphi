@@ -1,0 +1,169 @@
+unit EnderecoDAO;
+
+interface
+
+uses
+  System.Generics.Collections, FireDAC.Comp.Client, Endereco, DataModuleDatabase;
+
+type
+  TEnderecoDAO = class
+  private
+    function ObterTodosEnderecos: TList<TEndereco>;
+  public
+    function GetAll: TList<TEndereco>;
+    function Insert(Endereco: TEndereco): Boolean;
+    function Update(Endereco: TEndereco): Boolean;
+    function Delete(IdEndereco: Int64): Boolean;
+  end;
+
+implementation
+
+{ TEnderecoDAO }
+
+function TEnderecoDAO.GetAll: TList<TEndereco>;
+var
+  Query: TFDQuery;
+  Lista: TList<TEndereco>;
+  Endereco: TEndereco;
+begin
+  Lista := TList<TEndereco>.Create;
+  Query := TFDQuery.Create(nil);
+  try
+    Query.Connection := dmDatabase.FDConnection;
+    Query.SQL.Text := 'SELECT * FROM endereco';
+    Query.Open;
+
+    while not Query.Eof do
+    begin
+      Endereco := TEndereco.Create(
+        Query.FieldByName('idendereco').AsLargeInt,
+        Query.FieldByName('idpessoa').AsLargeInt,
+        Query.FieldByName('dscep').AsString
+      );
+      Lista.Add(Endereco);
+      Query.Next;
+    end;
+
+    Result := Lista;
+  finally
+    Query.Free;
+  end;
+end;
+
+function TEnderecoDAO.Insert(Endereco: TEndereco): Boolean;
+var
+  Query: TFDQuery;
+begin
+  Query := TFDQuery.Create(nil);
+  try
+    Query.Connection := dmDatabase.FDConnection;
+    Query.SQL.Text := 'INSERT INTO endereco (idpessoa, dscep) VALUES (:IdPessoa, :DsCep)';
+    Query.ParamByName('IdPessoa').AsLargeInt := Endereco.IdPessoa;
+    Query.ParamByName('DsCep').AsString := Endereco.DsCep;
+    Query.ExecSQL;
+    Result := True;
+  finally
+    Query.Free;
+  end;
+end;
+
+function TEnderecoDAO.Update(Endereco: TEndereco): Boolean;
+var
+  Query: TFDQuery;
+begin
+  Query := TFDQuery.Create(nil);
+  try
+    Query.Connection := dmDatabase.FDConnection;
+    Query.SQL.Text := 'UPDATE endereco SET idpessoa = :IdPessoa, dscep = :DsCep WHERE idendereco = :IdEndereco';
+    Query.ParamByName('IdPessoa').AsLargeInt := Endereco.IdPessoa;
+    Query.ParamByName('DsCep').AsString := Endereco.DsCep;
+    Query.ParamByName('IdEndereco').AsLargeInt := Endereco.IdEndereco;
+    Query.ExecSQL;
+    Result := True;
+  finally
+    Query.Free;
+  end;
+end;
+
+function TEnderecoDAO.Delete(IdEndereco: Int64): Boolean;
+var
+  Query: TFDQuery;
+begin
+  Query := TFDQuery.Create(nil);
+  try
+    Query.Connection := dmDatabase.FDConnection;
+    Query.SQL.Text := 'DELETE FROM endereco WHERE idendereco = :IdEndereco';
+    Query.ParamByName('IdEndereco').AsLargeInt := IdEndereco;
+    Query.ExecSQL;
+    Result := True;
+  finally
+    Query.Free;
+  end;
+end;
+
+procedure TEnderecoDAO.InserirOuAtualizarEnderecoIntegracao(const AEnderecoIntegracao: TEnderecoIntegracao);
+var
+  FDQuery: TFDQuery;
+begin
+  FDQuery := TFDQuery.Create(nil);
+  try
+    FDQuery.Connection := dmDatabase.FDConnection;
+
+    // Verifica se o registro já existe
+    FDQuery.SQL.Text := 'SELECT COUNT(*) FROM endereco_integracao WHERE idendereco = :IdEndereco';
+    FDQuery.ParamByName('IdEndereco').AsLargeInt := AEnderecoIntegracao.IdEndereco;
+    FDQuery.Open;
+
+    if FDQuery.Fields[0].AsInteger > 0 then
+    begin
+      // Registro existe, realiza o update
+      FDQuery.SQL.Text := 'UPDATE endereco_integracao SET dsuf = :DsUf, nmcidade = :NmCidade, ' +
+                          'nmbairro = :NmBairro, nmlogradouro = :NmLogradouro, dscomplemento = :DsComplemento ' +
+                          'WHERE idendereco = :IdEndereco';
+    end
+    else
+    begin
+      // Registro não existe, realiza o insert
+      FDQuery.SQL.Text := 'INSERT INTO endereco_integracao (idendereco, dsuf, nmcidade, nmbairro, nmlogradouro, dscomplemento) ' +
+                          'VALUES (:IdEndereco, :DsUf, :NmCidade, :NmBairro, :NmLogradouro, :DsComplemento)';
+    end;
+
+    FDQuery.ParamByName('IdEndereco').AsLargeInt := AEnderecoIntegracao.IdEndereco;
+    FDQuery.ParamByName('DsUf').AsString := AEnderecoIntegracao.DsUf;
+    FDQuery.ParamByName('NmCidade').AsString := AEnderecoIntegracao.NmCidade;
+    FDQuery.ParamByName('NmBairro').AsString := AEnderecoIntegracao.NmBairro;
+    FDQuery.ParamByName('NmLogradouro').AsString := AEnderecoIntegracao.NmLogradouro;
+    FDQuery.ParamByName('DsComplemento').AsString := AEnderecoIntegracao.DsComplemento;
+
+    FDQuery.ExecSQL;
+  finally
+    FDQuery.Free;
+  end;
+end;
+
+function TEnderecoDAO.ObterTodosEnderecos: TList<TEndereco>;
+var
+  FDQuery: TFDQuery;
+  Endereco: TEndereco;
+begin
+  Result := TList<TEndereco>.Create;
+  FDQuery := TFDQuery.Create(nil);
+  try
+    FDQuery.Connection := dmDatabase.FDConnection;
+    FDQuery.SQL.Text := 'SELECT idendereco, idpessoa, dscep FROM endereco';
+    FDQuery.Open;
+    while not FDQuery.Eof do
+    begin
+      Endereco := TEndereco.Create;
+      Endereco.IdEndereco := FDQuery.FieldByName('idendereco').AsLargeInt;
+      Endereco.IdPessoa := FDQuery.FieldByName('idpessoa').AsLargeInt;
+      Endereco.DsCep := FDQuery.FieldByName('dscep').AsString;
+      Result.Add(Endereco);
+      FDQuery.Next;
+    end;
+  finally
+    FDQuery.Free;
+  end;
+end;
+end.
+

@@ -1,0 +1,81 @@
+unit AtualizaEnderecoThread;
+
+interface
+
+uses
+  System.Classes, System.Generics.Collections, EnderecoDAO, Endereco,
+  EnderecoIntegracaoDAO, HttpUtils, System.JSON, System.SysUtils;
+
+type
+  TAtualizaEnderecoThread = class(TThread)
+  private
+    FEnderecoDAO: TEnderecoDAO;
+    FEnderecoIntegracaoDAO: TEnderecoIntegracaoDAO;
+    procedure ProcessarEndereco(AEndereco: TEndereco);
+  protected
+    procedure Execute; override;
+  public
+    constructor Create(CreateSuspended: Boolean);
+    destructor Destroy; override;
+  end;
+
+implementation
+
+constructor TAtualizaEnderecoThread.Create(CreateSuspended: Boolean);
+begin
+  inherited Create(CreateSuspended);
+  FreeOnTerminate := True;
+  FEnderecoDAO := TEnderecoDAO.Create;
+  FEnderecoIntegracaoDAO := TEnderecoIntegracaoDAO.Create;
+end;
+
+destructor TAtualizaEnderecoThread.Destroy;
+begin
+  FEnderecoDAO.Free;
+  FEnderecoIntegracaoDAO.Free;
+  inherited;
+end;
+
+procedure TAtualizaEnderecoThread.ProcessarEndereco(AEndereco: TEndereco);
+var
+  EnderecoIntegracao: TEnderecoIntegracao;
+begin
+  try
+    // Consulta a API ViaCEP para obter os dados
+    EnderecoIntegracao := THttpUtils.ConsultarViaCEP(AEndereco.DsCep);
+    try
+      EnderecoIntegracao.IdEndereco := AEndereco.IdEndereco;
+
+      // Atualiza ou insere os dados no banco
+      FEnderecoIntegracaoDAO.InserirOuAtualizar(EnderecoIntegracao);
+    finally
+      EnderecoIntegracao.Free;
+    end;
+  except
+    on E: Exception do
+      Synchronize(
+        procedure
+        begin
+          Writeln(Format('Erro ao processar Endereço ID %d (CEP: %s): %s',
+            [AEndereco.IdEndereco, AEndereco.DsCep, E.Message]));
+        end);
+  end;
+end;
+
+procedure TAtualizaEnderecoThread.Execute;
+var
+  ListaEnderecos: TList<TEndereco>;
+  Endereco: TEndereco;
+begin
+  ListaEnderecos := FEnderecoDAO.GetAll;
+  try
+    for Endereco in ListaEnderecos do
+    begin
+      ProcessarEndereco(Endereco); // Processa cada endereço individualmente
+    end;
+  finally
+    ListaEnderecos.Free;
+  end;
+end;
+
+end.

@@ -1,0 +1,49 @@
+unit Endereco;
+
+interface
+
+uses
+  System.Classes, System.SysUtils;
+
+type
+  TEndereco = class
+  private
+    FIdEndereco: Int64;
+    FIdPessoa: Int64;
+    FDsCep: string;
+  public
+    // Construtores e destrutores
+    constructor Create; overload;
+    constructor Create(AIdEndereco, AIdPessoa: Int64; ADsCep: string); overload;
+    destructor Destroy; override;
+
+    // Propriedades com atributos RTTI
+    property IdEndereco: Int64 read FIdEndereco write FIdEndereco;
+    property IdPessoa: Int64 read FIdPessoa write FIdPessoa;
+    property DsCep: string read FDsCep write FDsCep;
+  end;
+
+implementation
+
+{ TEndereco }
+
+constructor TEndereco.Create;
+begin
+  inherited Create;
+end;
+
+constructor TEndereco.Create(AIdEndereco, AIdPessoa: Int64; ADsCep: string);
+begin
+  inherited Create;
+  FIdEndereco := AIdEndereco;
+  FIdPessoa := AIdPessoa;
+  FDsCep := ADsCep;
+end;
+
+destructor TEndereco.Destroy;
+begin
+  inherited Destroy;
+end;
+
+end.
+

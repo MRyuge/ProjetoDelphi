@@ -1,0 +1,3 @@
+[Server]
+BaseUrl=http://localhost:8081/datasnap/rest/TDSServerModule1
+
