@@ -34,7 +34,7 @@ Baixar o Repositório
 bash
 Copiar
 Editar
-git clone https://github.com/seuusuario/seurepositorio.git
+git clone https://github.com/MRyuge/ProjetoDelphi
 cd client
 Dependências
 
