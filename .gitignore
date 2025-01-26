@@ -1,9 +1,14 @@
-# Ignorar todos os executáveis gerados
+# Ignorar todos os executáveis e DLLs gerados
 *.exe
 *.dll
 
-# Exceções para incluir binários necessários
+# Garantir que as pastas necessárias sejam incluídas
+!/server/
+!/server/bin/
 !/server/bin/*.exe
+
+!/client/
+!/client/bin/
 !/client/bin/*.exe
 
 # Ignorar backups e arquivos temporários
