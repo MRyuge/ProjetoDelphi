@@ -1,3 +1,6 @@
+gitHubKey
+gitHubKey.pub
+
 # Ignorar todos os executáveis e DLLs gerados
 *.exe
 *.dll
