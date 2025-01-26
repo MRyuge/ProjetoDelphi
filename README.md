@@ -10,73 +10,7 @@ Este projeto é o **Servidor** de um sistema de gerenciamento desenvolvido utili
 
 ### Diretórios Principais:
 
-C:\TesteDelphi\
 
-│   FormUnit1.dfm
-│   FormUnit1.pas
-│   ProjectGroup1.groupproj
-│   ProjectGroup1.groupproj.local
-│   Server.dpr
-│   Server.dproj
-│   Server.dproj.local
-│   Server.dres
-│   Server.identcache
-│   Server.res
-│   ServerResource.rc
-│   
-├───Config
-│       DatabaseConfig.ini
-│       
-├───Modules
-│       ServerMethodsUnit.dfm
-│       ServerMethodsUnit.pas
-│       WebModuleUnit.dfm
-│       WebModuleUnit.pas
-│       
-├───Negocios
-│   │   AtualizaEnderecoThread.pas
-│   │   EnderecoBusiness.pas
-│   │   PessoaBusiness.pas
-│   │   
-│   └───Validadores
-├───Persistencia
-│       DataModuleDatabase.dfm
-│       DataModuleDatabase.pas
-│       Endereco.pas
-│       EnderecoDAO.pas
-│       EnderecoIntegracao.pas
-│       EnderecoIntegracaoDAO.pas
-│       Pessoa.pas
-│       PessoaDAO.pas
-│       
-├───Recursos
-│   ├───css
-│   │       main.css
-│   │       serverfunctioninvoker.css
-│   │       
-│   ├───images
-│   │       collapse.png
-│   │       expand.png
-│   │       
-│   ├───js
-│   │       base64-min.js
-│   │       base64.js
-│   │       callbackframework-min.js
-│   │       callbackframework.js
-│   │       connection.js
-│   │       json2-min.js
-│   │       json2.js
-│   │       serverfunctionexecutor-min.js
-│   │       serverfunctionexecutor.js
-│   │       serverfunctioninvoker.js
-│   │       serverfunctions.js
-│   │       
-│   └───templates
-│           reversestring.html
-│           serverfunctioninvoker.html
-│           
-└───Utils
-        HttpUtils.pas
 markdown
 Copiar
 Editar
